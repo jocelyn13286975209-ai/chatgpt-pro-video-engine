@@ -1,41 +1,42 @@
-# ChatGPT Pro Video Engine
+# AI Video Studio (Local-first)
 
-Starter deployment for a private video-rendering API. It combines a Remotion composition project, HyperFrames CLI rendering, FFmpeg, and optional ElevenLabs text-to-speech. It is **not yet deployed** until you create the hosting service and configure its secrets.
+A local-first video production workspace. No Render account or cloud server is required. Your uploads and exports stay on your Windows computer in `video-data/`.
 
-## Stack
-- Node.js 22 + Express API
-- Remotion 4 server/CLI packages (versions pinned together)
-- HyperFrames CLI (HTML/CSS/JS to MP4)
-- FFmpeg + Chromium in Docker
-- Optional ElevenLabs API
-- Render.com Blueprint deployment
+## Features in this starter
+- Local Express server and browser UI at http://127.0.0.1:8787
+- Upload images, videos, voiceovers, and music
+- Background auto-edit job queue (in-memory queue; keep the app running)
+- FFmpeg normalization, image-to-video clips, concatenation, optional audio track, MP4 export
+- Remotion title-card render endpoint
+- Original HyperFrames HTML-to-video endpoint retained
+- Optional bearer authentication: set `VIDEO_API_KEY` in your environment if you intentionally expose/use the API beyond localhost
 
-## Deploy
-1. Push this repository to GitHub (already created).
-2. In Render, choose **New → Blueprint**, connect this repository, and apply `render.yaml`.
-3. Render generates `VIDEO_API_KEY` automatically. Copy its value from the service's Environment page when configuring the GPT Action; never commit it.
-4. ElevenLabs is optional. You can generate audio manually in the ElevenLabs website using its free monthly quota, then use that audio in your editing workflow. The `/v1/voice` API endpoint remains disabled until you later add `ELEVENLABS_API_KEY` as a Render secret.
-5. Wait for the service health check at `/health`.
-6. Open `/openapi.json`, replace the server URL with the actual Render URL, and import the schema into a Custom GPT Action. Set Action authentication to Bearer API key using the same `VIDEO_API_KEY`.
+## Windows one-click start
+1. Install Node.js 22 or newer: https://nodejs.org/
+2. Install Git for Windows if you plan to clone the repository: https://git-scm.com/downloads/win
+3. Install FFmpeg. The launcher attempts a Winget install if FFmpeg is missing; if that fails, install it manually and ensure `ffmpeg` and `ffprobe` are on PATH.
+4. Download/clone this repository.
+5. Double-click `start-windows.bat` (or run `start-windows.ps1` in PowerShell).
+6. Open http://127.0.0.1:8787
 
-## Endpoints
-- `GET /health` — health and integration status
-- `GET /openapi.json` — OpenAPI schema for GPT Actions
-- `POST /v1/render/hyperframes` — JSON `{ "html": "...", "filename": "clip.mp4" }`
-- `POST /v1/voice` — JSON `{ "text": "...", "voice_id": "...", "model_id": "eleven_multilingual_v2" }`
-- `GET /v1/renders/{filename}` — download a generated file (Bearer auth)
+The first start runs `npm install`. Keep the terminal window open while rendering. Stop the server with Ctrl+C.
 
-## Remotion demo
-The initial Remotion composition is in `src/remotion/index.jsx`. Render it locally with the Remotion CLI after dependencies are installed. This starter keeps the Remotion demo separate from HyperFrames rendering; each engine has its own composition model.
+## API
+- `GET /health`
+- `POST /api/uploads` multipart form-data field `files` (repeat for multiple files)
+- `POST /api/jobs/auto-edit` JSON: `{ "assetIds": ["..."], "voiceoverId": "...", "musicId": "...", "title": "...", "secondsPerImage": 4 }`
+- `GET /api/jobs` and `GET /api/jobs/{id}`
+- `GET /api/jobs/{id}/output`
+- `POST /api/render/remotion` JSON: `{ "title": "...", "subtitle": "..." }`
+- `POST /v1/render/hyperframes` JSON: `{ "html": "...", "filename": "clip.mp4" }`
 
-## Important production notes
-- The included Render Free plan is for initial testing only: the service may spin down when idle, and local render files are ephemeral. Download results promptly. Upgrade to a paid plan and add persistent storage for reliable production output.
-- The sample HyperFrames route is an initial CLI integration and should be validated against the selected HyperFrames CLI version before production use.
-- Do not expose the API without authentication, request limits, job queueing, and storage controls.
-- Never put provider API keys in frontend code, GitHub source files, or chat messages.
+## Important limitations (honest status)
+- This is a local editing/rendering foundation, not a generative text-to-video model. AI scene generation, semantic clip selection, speech-to-text subtitles, transitions, and a full timeline editor are future modules.
+- Current auto-edit creates a simple sequence in upload order; images become still-image clips. If a voiceover or music file is selected, it is used as the output audio track (voiceover takes precedence).
+- Jobs are held in memory; restarting the app loses job history. Uploaded files and completed MP4s remain in `video-data/`.
+- Rendering speed depends on your computer. Large files need disk space and time.
+- The server binds to 127.0.0.1 only. Do not expose it directly to the public internet. Do not commit personal media or secrets to GitHub.
+- HyperFrames CLI integration remains experimental and should be validated on the local machine.
 
-## Official references
-- Remotion renderer: https://www.remotion.dev/docs/render
-- HyperFrames: https://github.com/heygen-com/hyperframes
-- ElevenLabs API authentication: https://elevenlabs.io/docs/api-reference/authentication
-- GPT Actions: https://help.openai.com/en/articles/9442513-configuring-actions-in-gpts
+## Existing cloud deployment
+The previous `render.yaml` and Dockerfile are retained for possible future use, but local-first setup does not use them.
