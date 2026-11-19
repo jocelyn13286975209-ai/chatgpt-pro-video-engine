@@ -107,7 +107,7 @@ async function runAutoEdit(job, assets, opts) {
       normalized.push(out);
     }
     const list = path.join(work, "concat.txt");
-    await fs.writeFile(list, normalized.map(p => "file '" + p.replace(/'/g, "'\\''") + "'").join("\\n"));
+    await fs.writeFile(list, normalized.map(p => "file '" + p.replace(/'/g, "'\\''") + "'").join("\n"));
     const joined = path.join(work, "joined.mp4");
     await run("ffmpeg", ["-y","-f","concat","-safe","0","-i",list,"-c","copy",joined]);
     const output = path.join(OUTPUTS, job.id + ".mp4");
