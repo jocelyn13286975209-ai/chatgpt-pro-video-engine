@@ -18,6 +18,7 @@ const OUTPUTS = path.join(DATA, "renders");
 const MAX_FILE = Number(process.env.MAX_UPLOAD_BYTES || 1024 * 1024 * 1024);
 await Promise.all([UPLOADS, OUTPUTS].map(p => fs.mkdir(p, { recursive: true })));
 const jobs = new Map();
+const uploadMeta = new Map();
 const upload = multer({ dest: UPLOADS, limits: { fileSize: MAX_FILE, files: 30 } });
 
 function auth(req, res, next) {
@@ -55,7 +56,11 @@ app.get("/api/jobs/:id/output", auth, async (req, res) => {
   res.download(job.output.path, job.output.filename);
 });
 app.post("/api/uploads", auth, upload.array("files", 30), (req, res) => {
-  const files = (req.files || []).map(f => ({ id: path.basename(f.filename), originalName: f.originalname, mimeType: f.mimetype, size: f.size, kind: f.mimetype.startsWith("audio/") ? "audio" : f.mimetype.startsWith("image/") ? "image" : "video" }));
+  const files = (req.files || []).map(f => {
+    const item = { id: path.basename(f.filename), originalName: f.originalname, mimeType: f.mimetype, size: f.size, kind: f.mimetype.startsWith("audio/") ? "audio" : f.mimetype.startsWith("image/") ? "image" : "video" };
+    uploadMeta.set(item.id, item);
+    return item;
+  });
   res.status(201).json({ files });
 });
 app.post("/api/jobs/auto-edit", auth, async (req, res) => {
@@ -88,10 +93,9 @@ async function runAutoEdit(job, assets, opts) {
     job.status = "processing";
     for (let i = 0; i < assets.length; i++) {
       const input = assets[i].path;
-      const ext = path.extname((await fs.readdir(UPLOADS)).find(n => n === assets[i].id) || "").toLowerCase();
-      const mime = (await fs.stat(input)).isFile();
-      const probe = await run("ffprobe", ["-v", "error", "-show_entries", "stream=codec_type", "-of", "csv=p=0", input]).catch(() => ({ stdout: "" }));
-      const isImage = /image/i.test(probe.stdout) || [".jpg",".jpeg",".png",".webp",".bmp"].includes(ext);
+      const originalName = uploadMeta.get(assets[i].id)?.originalName || "";
+      const ext = path.extname(originalName).toLowerCase();
+      const isImage = [" .jpg",".jpeg",".png",".webp",".bmp",".gif",".tif",".tiff"].map(x => x.trim()).includes(ext);
       const out = path.join(work, String(i).padStart(3, "0") + ".mp4");
       const vf = "scale=" + opts.width + ":" + opts.height + ":force_original_aspect_ratio=decrease,pad=" + opts.width + ":" + opts.height + ":(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,format=yuv420p";
       const args = isImage
