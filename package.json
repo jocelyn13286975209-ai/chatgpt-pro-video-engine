@@ -1,13 +1,15 @@
 {
   "name": "chatgpt-pro-video-engine",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "engines": { "node": ">=22" },
   "scripts": {
     "start": "node src/server.mjs",
+    "dev": "node --watch src/server.mjs",
     "render:remotion": "remotion render src/remotion/index.jsx Main out/remotion-demo.mp4",
-    "render:hyperframes": "hyperframes render --help"
+    "render:hyperframes": "hyperframes render --help",
+    "check": "node --check src/server.mjs"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.545",
@@ -15,6 +17,7 @@
     "@remotion/renderer": "4.0.545",
     "express": "5.1.0",
     "hyperframes": "latest",
+    "multer": "2.0.2",
     "remotion": "4.0.545"
   }
 }
