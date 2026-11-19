@@ -13,8 +13,8 @@ Starter deployment for a private video-rendering API. It combines a Remotion com
 ## Deploy
 1. Push this repository to GitHub (already created).
 2. In Render, choose **New → Blueprint**, connect this repository, and apply `render.yaml`.
-3. Set `VIDEO_API_KEY` to a long random secret in the Render service environment.
-4. Register at https://elevenlabs.io/ and add `ELEVENLABS_API_KEY` as a secret. Do not commit API keys.
+3. Render generates `VIDEO_API_KEY` automatically. Copy its value from the service's Environment page when configuring the GPT Action; never commit it.
+4. ElevenLabs is optional. You can generate audio manually in the ElevenLabs website using its free monthly quota, then use that audio in your editing workflow. The `/v1/voice` API endpoint remains disabled until you later add `ELEVENLABS_API_KEY` as a Render secret.
 5. Wait for the service health check at `/health`.
 6. Open `/openapi.json`, replace the server URL with the actual Render URL, and import the schema into a Custom GPT Action. Set Action authentication to Bearer API key using the same `VIDEO_API_KEY`.
 
@@ -29,7 +29,7 @@ Starter deployment for a private video-rendering API. It combines a Remotion com
 The initial Remotion composition is in `src/remotion/index.jsx`. Render it locally with the Remotion CLI after dependencies are installed. This starter keeps the Remotion demo separate from HyperFrames rendering; each engine has its own composition model.
 
 ## Important production notes
-- Rendering can be CPU/memory intensive. Choose a host plan with sufficient RAM/CPU and persistent storage.
+- The included Render Free plan is for initial testing only: the service may spin down when idle, and local render files are ephemeral. Download results promptly. Upgrade to a paid plan and add persistent storage for reliable production output.
 - The sample HyperFrames route is an initial CLI integration and should be validated against the selected HyperFrames CLI version before production use.
 - Do not expose the API without authentication, request limits, job queueing, and storage controls.
 - Never put provider API keys in frontend code, GitHub source files, or chat messages.
