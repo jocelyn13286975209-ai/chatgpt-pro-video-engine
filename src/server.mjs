@@ -39,9 +39,8 @@ app.post("/v1/render/hyperframes", auth, async (req, res) => {
   const safeName = path.basename(filename).replace(/[^a-zA-Z0-9._-]/g, "_").replace(/\.mp4$/i, "") + ".mp4";
   try {
     await fs.writeFile(path.join(dir, "index.html"), html);
-    await run("npx", ["--yes", "hyperframes", "render", "--help"], dir);
-    await run("npx", ["--yes", "hyperframes", "render"], dir);
-    const source = path.join(dir, "out", "video.mp4");
+    await run("npx", ["--yes", "hyperframes", "render", "--output", "video.mp4"], dir);
+    const source = path.join(dir, "video.mp4");
     await fs.mkdir(OUTPUT_DIR, { recursive: true });
     const dest = path.join(OUTPUT_DIR, id + "-" + safeName);
     await fs.copyFile(source, dest);
