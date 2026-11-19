@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: chatgpt-pro-video-engine
+    runtime: docker
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VIDEO_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: RENDER_OUTPUT_DIR
+        value: /var/data/renders
+    disk:
+      name: video-renders
+      mountPath: /var/data
+      sizeGB: 10
